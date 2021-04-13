@@ -54,19 +54,21 @@ def extract_ticker(post):
    other_tickers =  re.findall(r'\b[A-Z][a-zA-Z]{1,4}\b', post)
    all_tick = reg_tickers + other_tickers
    print(all_tick)
-   for tick in all_tick:
-      if tick.upper() in lookup:
-         add_ticker(tick)
+
 
 #Run
-for post in submission:
+for post in submission: #Loops thru reddit posts
    analyzer = SentimentIntensityAnalyzer()
-   extract_ticker(post.title)
-   # print(post.title)
+   post_tickers = extract_ticker(post.title) #Returns list of tickers
+   for tick in post_tickers: #Loops thru tickers in the returned list
+      if tick.upper() in lookup and tick.upper() not in blacklist_words:
+         add_ticker(tick)
    post.comments.replace_more(limit=4) #Max 32 instances
-   for top_level_comment in post.comments and tick.upper() not in blacklist_words:
-      # print(top_level_comment.body)
-      extract_ticker(top_level_comment.body)
+   for top_level_comment in post.comments: #Loops thru comment in post
+      comment_tickers = extract_ticker(top_level_comment.body)
+      for tick in post_tickers:
+         if tick.upper() in lookup and tick.upper() not in blacklist_words:
+            add_ticker(tick)
 
 print(ticker_dict)
 
