@@ -12,11 +12,11 @@ lookup = set(list_of_tickers)
 ticker_dict = {}
 
 reddit = praw.Reddit(
-    client_id="BtjxvWJ_zS-n2Q",
-    client_secret="BS6RuPJqZ_kVJnln_vQlcLEowEzCSQ",
-    password="gtf0mypassword",
-    user_agent="testscript by u/ryancfl0",
-    username="ryancfl0",
+    client_id="***********",
+    client_secret="***********",
+    password="***********",
+    user_agent="***********",
+    username="***********",
 )
 
 blacklist_words = [
