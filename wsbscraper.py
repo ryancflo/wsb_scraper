@@ -42,7 +42,7 @@ subreddit = reddit.subreddit('WallStreetBets')
 # submission = subreddit.new(limit=50)
 
 submission = api.search_submissions(after=start_epoch,
-                            subreddit=['WallStreetBets'], limit = 5)
+                            subreddit=['WallStreetBets'], limit = 50)
 
 print(submission)
 
@@ -56,16 +56,31 @@ class Ticker:
       self.bodies = []
       self.sentiment = 0 # 0 is neutral
 
-#analyze based on comment upvotes
-def analyze(top_level_comment):
-   vs = analyzer.polarity_scores(top_level_comment)
-   print("{:-<65} {}".format(top_level_comment, str(vs)))
+   def __str__(self):
+      return ("Ticker: " + str(self.ticker) + " Count: " + str(self.count) + " Bullish: " + str(self.bullish) + " Bearish: " + str(self.bearish))
 
-def add_ticker(word):
-   if not word in ticker_dict:
-         ticker_dict[word] = 1
+#Analyze post body
+def analyze(ticker, body):
+   analyzer = SentimentIntensityAnalyzer()
+   sentiment = analyzer.polarity_scores(body)
+   if (sentiment["compound"] > .005) or (sentiment["pos"] > abs(sentiment["neg"])):
+      ticker.bullish += 1
+   elif (sentiment["compound"] < -.005) or (abs(sentiment["neg"]) > sentiment["pos"]):
+      ticker.bearish += 1
    else:
-         ticker_dict[word] += 1
+      ticker.neutral += 1
+print(sentiment)
+
+def add_ticker(word, body):
+   if not word in ticker_dict:
+         ticker_dict[word] = Ticker(word)
+         ticker_dict[word].count = 1
+         ticker_dict[word].bodies.append(body)
+         analyze(ticker_dict[word], body)
+   else:
+         ticker_dict[word].count += 1
+         ticker_dict[word].bodies.append(body)
+         analyze(ticker_dict[word], body)
 
 #Without Dollar Sign
 def extract_ticker(post):
@@ -75,43 +90,22 @@ def extract_ticker(post):
    all_tick = reg_tickers + other_tickers
    return all_tick
 
-#Analyze Function
-def analyze_sentiment(ticker):
-   analyzer = SentimentIntensityAnalyzer()
-   neutral_count = 0
-   for text in self.bodies:
-      sentiment = analyzer.polarity_scores(text)
-      if (sentiment["compound"] > .005) or (sentiment["pos"] > abs(sentiment["neg"])):
-         self.pos_count += 1
-      elif (sentiment["compound"] < -.005) or (abs(sentiment["neg"]) > sentiment["pos"]):
-         self.neg_count += 1
-      else:
-         neutral_count += 1
-
-   self.bullish = int(self.pos_count / len(self.bodies) * 100)
-   self.bearish = int(self.neg_count / len(self.bodies) * 100)
-   self.neutral = int(neutral_count / len(self.bodies) * 100)
-
-
 #Run
 for post in submission: #Loops thru reddit posts
    print(post.title)
    post_tickers = extract_ticker(post.title) #Returns list of tickers
    for tick in post_tickers: #Loops thru tickers in the returned list
       if tick.upper() in lookup and tick.upper() not in blacklist_words:
-         add_ticker(tick)
+         add_ticker(tick, post.title)
    post.comments.replace_more(limit=4) #Max 32 instances
    for top_level_comment in post.comments: #Loops thru comment in post
       comment_tickers = extract_ticker(top_level_comment.body)
       # print(top_level_comment.body)
       for tick in post_tickers:
          if tick.upper() in lookup and tick.upper() not in blacklist_words:
-            add_ticker(tick)
+            add_ticker(tick, top_level_comment.body)
 
-# for key, value in ticker_dict.items():
-#    analyze_sentiment(key)
+for key, value in ticker_dict.items():
+   print(value)
 
-
-print(ticker_dict)
-
-
+# print(ticker_dict)
