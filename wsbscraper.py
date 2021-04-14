@@ -69,7 +69,7 @@ def analyze(ticker, body):
       ticker.bearish += 1
    else:
       ticker.neutral += 1
-print(sentiment)
+    print(sentiment)
 
 def add_ticker(word, body):
    if not word in ticker_dict:
